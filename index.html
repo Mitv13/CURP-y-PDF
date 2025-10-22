@@ -26,7 +26,10 @@ body{
   display:flex;
   flex-direction:column;
   min-height:100vh;
+  padding-top: 70px;
+
 }
+
 
 /* ====== NAVBAR GOB ====== */
 .navbar {
@@ -159,6 +162,28 @@ button{
   .nav-links a{margin-left:12px; font-size:14px}
   .logo img{width:130px}
 }
+
+input:focus,
+select:focus,
+button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.5);
+  border-color: #06b6d4;
+}
+
+/* 🔹 Ajuste visual del menú desplegable */
+select {
+  background-color: rgba(255, 255, 255, 0.08); /* fondo gris oscuro translúcido */
+  color: #e6eef6; /* texto claro */
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* 🔹 Apariencia de las opciones al desplegar */
+option {
+  background-color: #0f1724; /* fondo oscuro para cada opción */
+  color: #e6eef6; /* texto visible */
+}
+
 
 /* ====== FOOTER ====== */
 footer {
