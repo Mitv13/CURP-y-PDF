@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de CURP con PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+   :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --accent:#06b6d4;
+    --muted:#e8ebf0;
+    --glass:rgba(255,255,255,0.03);
+    --vino:#601121;
+    --vino-oscuro:#4b0d1b;
+   }
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:linear-gradient(180deg,#25592f 0%, #0e2915 100%);
+  color:#e1e6ed;
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* ====== NAVBAR GOB ====== */
+.navbar {
+  width: 100%;
+  background-color: var(--vino);
+  border-bottom: 5px solid #a22d2d;
+  color: #fff;
+  padding: 10px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.nav-container {
+  width: 92%;
+  max-width: 1150px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.logo img {
+  width: 160px;
+  height: auto;
+  filter: brightness(0) invert(1);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 24px;
+  font-weight: 600;
+  transition: color 0.2s ease, border-bottom 0.2s ease;
+  padding-bottom: 4px;
+}
+
+.nav-links a:hover {
+  color: #ffddcc;
+  border-bottom: 2px solid #ffddcc;
+}
+
+/* ====== CONTENIDO ====== */
+main{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:100px 20px 40px;
+}
+
+.container{
+  width:980px;
+  max-width:100%;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:12px;
+  padding:28px;
+  box-shadow:0 8px 40px rgba(2,6,23,0.7);
+}
+
+h1{margin:0 0 8px; font-size:22px; letter-spacing:0.4px}
+p.lead{margin:0 0 18px; color:var(--muted); font-size:14px}
+form{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; align-items:end}
+label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+input[type=text], select, input[type=date]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(36, 33, 33, 0.04);
+  background:var(--glass);
+  color:inherit
+}
+.full{grid-column:1/-1}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+button{
+  padding:10px 14px;
+  border-radius:10px;
+  border:0;
+  cursor:pointer;
+  font-weight:600
+}
+.btn-primary{
+  background:linear-gradient(90deg,var(--accent),#0ea5a5);
+  color:#022;
+  box-shadow:0 6px 18px rgba(238, 240, 240, 0.12)
+}
+.btn-ghost{
+  background:transparent;
+  border:1px solid rgba(250, 246, 246, 0.04);
+  color:var(--muted)
+}
+.btn-pdf{
+  background:#0ea5e9;
+  color:#fff;
+  border:none;
+}
+.output{
+  margin-top:18px;
+  padding:16px;
+  border-radius:10px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+  display:flex;
+  gap:16px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.curp{
+  font-family:monospace;
+  background:rgba(0,0,0,0.25);
+  padding:10px 14px;
+  border-radius:8px;
+  font-size:20px;
+  letter-spacing:2px
+}
+.note{font-size:12px; color:var(--muted)}
+
+@media (max-width:720px){
+  form{grid-template-columns:1fr}
+  .container{padding:18px}
+  .nav-links a{margin-left:12px; font-size:14px}
+  .logo img{width:130px}
+}
+
+/* ====== FOOTER ====== */
+footer {
+  background: var(--vino);
+  color: #fff;
+  font-size: 13px;
+  padding: 30px 10%;
+  text-align: center;
+  border-top: 5px solid #a22d2d;
+}
+footer .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+footer .footer-links a {
+  color: #ffdddd;
+  text-decoration: none;
+}
+footer .footer-links a:hover {
+  text-decoration: underline;
+}
+footer p {
+  margin-top: 10px;
+  color: #ccc;
+  font-size: 12px;
+}
+
+  </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<header class="navbar">
+  <div class="nav-container">
+    <div class="logo">
+      <img src="image.png" alt="Gobierno de México">
+    </div>
+
+    <nav class="nav-links">
+      <a href="#">Inicio</a>
+      <a href="#">Trámites</a>
+      <a href="#">Consultas</a>
+      <a href="#">Ayuda</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== CONTENIDO PRINCIPAL ===== -->
+<main>
+  <div class="container">
+    <h1>Generador de CURP</h1>
+    <p class="lead">Rellena los datos y presiona <strong>"Generar"</strong>.</p>
+
+    <form id="curpForm" onsubmit="return false;">
+      <div>
+        <label>Apellido paterno</label>
+        <input type="text" id="apP" placeholder="Ej. GONZÁLEZ" autocomplete="off">
+      </div>
+      <div>
+        <label>Apellido materno</label>
+        <input type="text" id="apM" placeholder="Ej. LÓPEZ" autocomplete="off">
+      </div>
+      <div>
+        <label>Nombre(s)</label>
+        <input type="text" id="nombres" placeholder="Ej. MARÍA FERNANDA" autocomplete="off">
+      </div>
+      <div>
+        <label>Fecha de nacimiento</label>
+        <input type="date" id="fecha" value="2000-01-01">
+      </div>
+      <div>
+        <label>Sexo</label>
+        <select id="sexo">
+          <option value="">Seleccione</option>
+          <option value="H">Hombre (H)</option>
+          <option value="M">Mujer (M)</option>
+        </select>
+      </div>
+      <div>
+        <label>Estado de nacimiento</label>
+        <select id="estado">
+          <option value="">Seleccione</option>
+          <option value="AS">AGUASCALIENTES</option>
+          <option value="BS">BAJA CALIFORNIA</option>
+          <option value="CL">BAJA CALIFORNIA SUR</option>
+          <option value="CS">CAMPECHE</option>
+          <option value="CH">COAHUILA</option>
+          <option value="DF">CIUDAD DE MÉXICO</option>
+          <option value="DG">DURANGO</option>
+          <option value="GT">GUANAJUATO</option>
+          <option value="GR">GUERRERO</option>
+          <option value="HG">HIDALGO</option>
+          <option value="JC">JALISCO</option>
+          <option value="MC">MÉXICO</option>
+          <option value="MN">MICHOACÁN</option>
+          <option value="MS">MORELOS</option>
+          <option value="NT">NAYARIT</option>
+          <option value="NL">NUEVO LEÓN</option>
+          <option value="OC">OAXACA</option>
+          <option value="PL">PUEBLA</option>
+          <option value="QT">QUERÉTARO</option>
+          <option value="QR">QUINTANA ROO</option>
+          <option value="SP">SAN LUIS POTOSÍ</option>
+          <option value="SL">SINALOA</option>
+          <option value="SR">SONORA</option>
+          <option value="TC">TABASCO</option>
+          <option value="TL">TAMAULIPAS</option>
+          <option value="TS">TLAXCALA</option>
+          <option value="VZ">VERACRUZ</option>
+          <option value="YN">YUCATLÁN</option>
+          <option value="ZS">ZACATECAS</option>
+          <option value="NE">NACIDO EN EL EXTRANJERO</option>
+        </select>
+      </div>
+      <div class="full actions">
+        <button class="btn-primary" id="generar">Generar CURP</button>
+        <button class="btn-ghost" id="copiar" type="button">Copiar</button>
+        <button class="btn-ghost" id="limpiar" type="button">Limpiar</button>
+        <button class="btn-ghost" id="pdf" type="button">Generar PDF</button>
+      </div>
+    </form>
+
+    <div class="output" id="output" style="display:none">
+      <div>
+        <div class="note">CURP generada</div>
+        <div class="curp" id="curpText">XXXXXXXXXXXXXXX</div>
+      </div>
+      <div style="flex:1">
+        <div class="note">Detalles</div>
+        <div id="detalles" class="note"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-links">
+    <a href="#">Gobierno de México</a>
+    <a href="#">Trámites</a>
+    <a href="#">Aviso de privacidad</a>
+    <a href="#">Accesibilidad</a>
+    <a href="#">Denuncia</a>
+  </div>
+  <p>© 2025 Gobierno de México | Todos los derechos reservados</p>
+</footer>
+
+<script>
+  // 🔹 Quita acentos y caracteres especiales
+  function removeAccents(str) {
+    return str
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/Ñ/gi, 'X')
+      .replace(/[^A-Z\s]/gi, '');
+  }
+
+  // 🔹 Limpia los nombres y apellidos
+  function cleanName(s) {
+    if (!s) return '';
+    s = s.toUpperCase().trim();
+    s = s
+      .replace(/\b(DE|DEL|LA|LAS|LOS|Y|MC|VAN|VON)\b/gi, '')
+      .replace(/\s+/g, ' ');
+    s = removeAccents(s);
+    return s;
+  }
+
+  // 🔹 Obtiene la primera vocal después de la inicial
+  function firstVowelAfterFirst(word) {
+    const vowels = /[AEIOU]/;
+    for (let i = 1; i < word.length; i++)
+      if (vowels.test(word[i])) return word[i];
+    return 'X';
+  }
+
+  // 🔹 Obtiene la primera consonante después de la inicial
+  function firstConsonantAfterFirst(word) {
+    const vowels = /[AEIOU]/;
+    for (let i = 1; i < word.length; i++)
+      if (!vowels.test(word[i]) && /[A-ZÑ]/.test(word[i])) return word[i];
+    return 'X';
+  }
+
+  // 🔹 Agrega ceros a la izquierda
+  function pad2(n) {
+    return n.toString().padStart(2, '0');
+  }
+
+  // 🔹 Genera homoclave
+  function homoclaveFromString(s) {
+    let sum = 0;
+    for (let i = 0; i < s.length; i++) sum = (sum * 31 + s.charCodeAt(i)) >>> 0;
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const a = chars[sum % chars.length];
+    const b = chars[Math.floor((sum / chars.length) % chars.length)];
+    return a + b;
+  }
+
+  // 🔹 Dígito verificador
+  function digitVerificador(curp17) {
+    const map = '0123456789ABCDEFGHIJKLMNÑOPQRSTUVWXYZ';
+    let suma = 0;
+    for (let i = 0; i < curp17.length; i++) {
+      const c = curp17[i];
+      const val = map.indexOf(c);
+      suma += val * (18 - i);
+    }
+    const resto = suma % 10;
+    return resto === 0 ? '0' : String(10 - resto);
+  }
+
+  // 🔹 Generar CURP
+  document.getElementById('generar').addEventListener('click', () => {
+    const apP = cleanName(document.getElementById('apP').value);
+    const apM = cleanName(document.getElementById('apM').value);
+    const nombresRaw = cleanName(document.getElementById('nombres').value);
+    const fecha = document.getElementById('fecha').value;
+    const sexo = document.getElementById('sexo').value;
+    const estado = document.getElementById('estado').value;
+
+    if (!apP || !nombresRaw || !fecha) {
+      alert('Proporciona al menos: apellido paterno, nombre(s) y fecha de nacimiento.');
+      return;
+    }
+
+    const nombresArr = nombresRaw.split(' ').filter(Boolean);
+    const excluidos = ['JOSE', 'J', 'J.', 'MARIA', 'MA', 'MA.', 'MARÍA'];
+    let nombreParaInicial = nombresArr[0] || '';
+    if (nombresArr.length > 1 && excluidos.includes(nombreParaInicial))
+      nombreParaInicial = nombresArr[1];
+
+    const inicialP = apP[0] || 'X';
+    const vocalP = firstVowelAfterFirst(apP) || 'X';
+    const inicialM = apM && apM.length > 0 ? apM[0] : 'X';
+    const inicialN = nombreParaInicial && nombreParaInicial.length > 0 ? nombreParaInicial[0] : 'X';
+
+    const d = new Date(fecha);
+    if (isNaN(d)) {
+      alert('Fecha inválida');
+      return;
+    }
+
+    const yy = String(d.getFullYear()).slice(-2);
+    const mm = pad2(d.getMonth() + 1);
+    const dd = pad2(d.getDate());
+
+    const consP = firstConsonantAfterFirst(apP);
+    const consM = apM && apM.length > 0 ? firstConsonantAfterFirst(apM) : 'X';
+    const consN = firstConsonantAfterFirst(nombreParaInicial);
+
+    let curp = `${inicialP}${vocalP}${inicialM}${inicialN}${yy}${mm}${dd}${sexo}${estado}${consP}${consM}${consN}`;
+    const homo = homoclaveFromString(apP + apM + nombresRaw + fecha);
+    const curp17 = (curp + homo).slice(0, 17).toUpperCase();
+    const verif = digitVerificador(curp17);
+    const curpFinal = (curp17 + verif).toUpperCase();
+
+    document.getElementById('curpText').textContent = curpFinal;
+    document.getElementById('detalles').textContent =
+      `Partes: ${inicialP}${vocalP}${inicialM}${inicialN} - ${yy}${mm}${dd} - ${sexo} - ${estado} - ${consP}${consM}${consN} - ${homo} - ${verif}`;
+    document.getElementById('output').style.display = 'flex';
+  });
+
+  // 🔹 Copiar CURP
+  document.getElementById('copiar').addEventListener('click', () => {
+    const txt = document.getElementById('curpText').textContent;
+    if (!txt || txt.includes('X'))
+      return alert('Primero genera una CURP válida.');
+    navigator.clipboard
+      ?.writeText(txt)
+      .then(() => alert('CURP copiada al portapapeles'))
+      .catch(() => alert('No se pudo copiar.'));
+  });
+
+  // 🔹 Limpiar campos
+  document.getElementById('limpiar').addEventListener('click', () => {
+    ['apP', 'apM', 'nombres', 'fecha'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('output').style.display = 'none';
+  });
+
+  // 🔹 Generar PDF
+document.getElementById('pdf').addEventListener('click', () => {
+  const apP = document.getElementById('apP').value.trim();
+  const apM = document.getElementById('apM').value.trim();
+  const nombres = document.getElementById('nombres').value.trim();
+  const fecha = document.getElementById('fecha').value.trim();
+  const sexo = document.getElementById('sexo').value;
+  const estado = document.getElementById('estado').value;
+  const curp = document.getElementById('curpText').textContent.trim();
+
+  // 🔸 Validación: si no hay datos o CURP generada, mostrar alerta
+  if (!apP || !nombres || !fecha || !sexo || !estado || curp === '' || curp.includes('X')) {
+    alert('Por favor genera primero la CURP antes de crear el PDF.');
+    return; // Detiene la ejecución aquí
+  }
+
+  // 🔸 Si todo está correcto, generar el PDF
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('CURP Generada', 70, 20);
+
+  doc.setFontSize(12);
+  doc.text('Apellido Paterno: ' + apP, 20, 40);
+  doc.text('Apellido Materno: ' + apM, 20, 50);
+  doc.text('Nombre(s): ' + nombres, 20, 60);
+  doc.text('Fecha de Nacimiento: ' + fecha, 20, 70);
+  doc.text('Sexo: ' + sexo, 20, 80);
+  doc.text('Estado: ' + estado, 20, 90);
+
+  doc.setTextColor(0, 102, 204);
+  doc.setFontSize(14);
+  doc.text('CURP Generada: ' + curp, 20, 110);
+
+  doc.save('CURP_Generada.pdf');
+});
+
+// 🔹 Convertir texto a mayúsculas mientras el usuario escribe
+['apP', 'apM', 'nombres'].forEach(id => {
+  const input = document.getElementById(id);
+  input.addEventListener('input', () => {
+    input.value = input.value.toUpperCase();
+  });
+});
+
+</script>
+
+</body>
+</html>
